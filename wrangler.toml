@@ -1,0 +1,19 @@
+name = "nibm-calendar-sync"
+main = "src/worker.ts"
+compatibility_date = "2026-05-22"
+
+[vars]
+GOOGLE_REDIRECT_URI = "https://nibm-calendar-sync.YOUR_SUBDOMAIN.workers.dev/auth/callback"
+SHAREPOINT_EXCEL_URL = "https://nibm-my.sharepoint.com/:x:/g/personal/chandula_nibm_lk/IQDBA5Scq1DVRoesV2lJmSQXAVCeRXoAYpFP3J_IBQVhao8?download=1"
+GOOGLE_CALENDAR_NAME = "NIBM Schedule"
+TIMEZONE = "Asia/Colombo"
+EVENT_START = "09:00"
+EVENT_END = "17:00"
+
+[[d1_databases]]
+binding = "DB"
+database_name = "nibm-calendar-sync"
+database_id = "REPLACE_WITH_D1_DATABASE_ID"
+
+[triggers]
+crons = ["0 18 * * *"]

@@ -1,0 +1,116 @@
+import * as XLSX from "xlsx";
+import type { DesiredEvent } from "./types.js";
+
+const MONTHS: Record<string, string> = {
+  january: "01",
+  february: "02",
+  march: "03",
+  april: "04",
+  may: "05",
+  june: "06",
+  july: "07",
+  august: "08",
+  september: "09",
+  october: "10",
+  november: "11",
+  december: "12"
+};
+
+export type SheetRow = Array<string | number | Date | null | undefined>;
+
+export function parseWorkbook(buffer: Buffer, timeZone: string, startTime: string, endTime: string): DesiredEvent[] {
+  const workbook = XLSX.read(buffer, { type: "buffer", cellDates: true });
+  const sheetName = workbook.SheetNames[0];
+
+  if (!sheetName) {
+    throw new Error("The workbook does not contain any sheets.");
+  }
+
+  const sheet = workbook.Sheets[sheetName];
+  const rows = XLSX.utils.sheet_to_json<SheetRow>(sheet, {
+    header: 1,
+    raw: false,
+    blankrows: false
+  });
+
+  return parseScheduleRows(rows, timeZone, startTime, endTime);
+}
+
+export function parseScheduleRows(rows: SheetRow[], timeZone: string, startTime: string, endTime: string): DesiredEvent[] {
+  const eventsBySourceKey = new Map<string, DesiredEvent>();
+
+  for (const row of rows) {
+    const date = parseDateCell(row[0]);
+
+    if (!date) {
+      continue;
+    }
+
+    for (const cell of row.slice(1)) {
+      const moduleName = normalizeModuleName(String(cell ?? ""));
+
+      if (!moduleName) {
+        continue;
+      }
+
+      const sourceKey = `${date}|${moduleName}`;
+
+      if (!eventsBySourceKey.has(sourceKey)) {
+        eventsBySourceKey.set(sourceKey, {
+          sourceKey,
+          title: moduleName,
+          date,
+          startDateTime: `${date}T${startTime}:00`,
+          endDateTime: `${date}T${endTime}:00`,
+          timeZone
+        });
+      }
+    }
+  }
+
+  return [...eventsBySourceKey.values()].sort((left, right) => {
+    const dateCompare = left.date.localeCompare(right.date);
+    return dateCompare === 0 ? left.title.localeCompare(right.title) : dateCompare;
+  });
+}
+
+export function normalizeModuleName(value: string): string {
+  return value
+    .replace(/\[[^\]]*\]/g, " ")
+    .replace(/\([^)]*\)/g, " ")
+    .replace(/\b\d{1,2}(?::|\.)\d{2}\s*(?:am|pm)?\s*-\s*\d{1,2}(?::|\.)\d{2}\s*(?:am|pm)?\b/gi, " ")
+    .split(/\s+-\s+/)[0]
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
+function parseDateCell(value: SheetRow[number]): string | null {
+  if (value instanceof Date && !Number.isNaN(value.getTime())) {
+    return toIsoDate(value.getFullYear(), value.getMonth() + 1, value.getDate());
+  }
+
+  const text = String(value ?? "").trim();
+
+  if (!text) {
+    return null;
+  }
+
+  const match = text.match(/(?:Monday|Tuesday|Wednesday|Thursday|Friday|Saturday|Sunday),\s+([A-Za-z]+)\s+(\d{1,2}),\s+(\d{4})/i);
+
+  if (!match) {
+    return null;
+  }
+
+  const [, monthName, day, year] = match;
+  const month = MONTHS[monthName.toLowerCase()];
+
+  if (!month) {
+    return null;
+  }
+
+  return `${year}-${month}-${day.padStart(2, "0")}`;
+}
+
+function toIsoDate(year: number, month: number, day: number): string {
+  return `${year}-${String(month).padStart(2, "0")}-${String(day).padStart(2, "0")}`;
+}

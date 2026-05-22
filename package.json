@@ -1,0 +1,29 @@
+{
+  "name": "excel-calendar-sync",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "auth": "tsx src/cli.ts auth",
+    "sync": "tsx src/cli.ts sync",
+    "deploy": "wrangler deploy",
+    "db:migrate:local": "wrangler d1 migrations apply nibm-calendar-sync --local",
+    "db:migrate:remote": "wrangler d1 migrations apply nibm-calendar-sync --remote",
+    "test": "vitest run",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "dotenv": "^16.4.7",
+    "googleapis": "^144.0.0",
+    "xlsx": "^0.18.5"
+  },
+  "devDependencies": {
+    "@cloudflare/workers-types": "^4.20260522.1",
+    "@types/node": "^22.10.2",
+    "fflate": "^0.8.3",
+    "tsx": "^4.19.2",
+    "typescript": "^5.7.2",
+    "vitest": "^2.1.8",
+    "wrangler": "^4.49.0"
+  }
+}
