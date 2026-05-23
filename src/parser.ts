@@ -47,7 +47,8 @@ export function parseScheduleRows(rows: SheetRow[], timeZone: string, startTime:
     }
 
     for (const cell of row.slice(1)) {
-      const moduleName = normalizeModuleName(String(cell ?? ""));
+      const cellText = String(cell ?? "");
+      const moduleName = shouldSkipScheduleCell(cellText) ? "" : normalizeModuleName(cellText);
 
       if (!moduleName) {
         continue;
@@ -74,6 +75,10 @@ export function parseScheduleRows(rows: SheetRow[], timeZone: string, startTime:
   });
 }
 
+function shouldSkipScheduleCell(value: string): boolean {
+  return /\b(postponed|cancelled|canceled)\b/i.test(value);
+}
+
 export function normalizeModuleName(value: string): string {
   return value
     .replace(/\[[^\]]*\]/g, " ")
@@ -89,10 +94,18 @@ function parseDateCell(value: SheetRow[number]): string | null {
     return toIsoDate(value.getFullYear(), value.getMonth() + 1, value.getDate());
   }
 
+  if (typeof value === "number" && Number.isFinite(value)) {
+    return excelSerialDateToIsoDate(value);
+  }
+
   const text = String(value ?? "").trim();
 
   if (!text) {
     return null;
+  }
+
+  if (/^\d+(?:\.\d+)?$/.test(text)) {
+    return excelSerialDateToIsoDate(Number(text));
   }
 
   const match = text.match(/(?:Monday|Tuesday|Wednesday|Thursday|Friday|Saturday|Sunday),\s+([A-Za-z]+)\s+(\d{1,2}),\s+(\d{4})/i);
@@ -113,4 +126,14 @@ function parseDateCell(value: SheetRow[number]): string | null {
 
 function toIsoDate(year: number, month: number, day: number): string {
   return `${year}-${String(month).padStart(2, "0")}-${String(day).padStart(2, "0")}`;
+}
+
+function excelSerialDateToIsoDate(serialDate: number): string | null {
+  if (serialDate < 1) {
+    return null;
+  }
+
+  const excelEpoch = Date.UTC(1899, 11, 30);
+  const date = new Date(excelEpoch + Math.floor(serialDate) * 86400000);
+  return toIsoDate(date.getUTCFullYear(), date.getUTCMonth() + 1, date.getUTCDate());
 }

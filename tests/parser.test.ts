@@ -42,9 +42,28 @@ describe("parseScheduleRows", () => {
   it("creates separate events for different modules on the same date", () => {
     const rows = [["Saturday, June 6, 2026", "EAD2 - Lecture [Mr. Lahiru] 9:00 am - 12:00 pm", "MAD - Ishara Dissanayake"]];
 
-    expect(parseScheduleRows(rows, "Asia/Colombo", "09:00", "17:00").map((event) => event.sourceKey)).toEqual([
+    expect(parseScheduleRows(rows, "Asia/Colombo", "09:00", "16:00").map((event) => event.sourceKey)).toEqual([
       "2026-06-06|EAD2",
       "2026-06-06|MAD"
+    ]);
+  });
+
+  it("accepts Excel serial dates from raw workbook XML", () => {
+    const rows = [[46168, "Robotics - Mr. Supun"]];
+
+    expect(parseScheduleRows(rows, "Asia/Colombo", "09:00", "16:00").map((event) => event.sourceKey)).toEqual([
+      "2026-05-26|Robotics"
+    ]);
+  });
+
+  it("skips postponed and cancelled schedule cells", () => {
+    const rows = [
+      ["Tuesday, May 26, 2026", "Robotics - postponed", "MAD - cancelled"],
+      ["Wednesday, May 27, 2026", "ECS II - Day 1 Session 1 [Ms. Bhagya]", ""]
+    ];
+
+    expect(parseScheduleRows(rows, "Asia/Colombo", "09:00", "16:00").map((event) => event.sourceKey)).toEqual([
+      "2026-05-27|ECS II"
     ]);
   });
 });
