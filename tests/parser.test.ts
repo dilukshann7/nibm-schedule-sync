@@ -48,6 +48,20 @@ describe("parseScheduleRows", () => {
     ]);
   });
 
+  it("reads lecture names from either B or C and joins split B/C details", () => {
+    const rows = [
+      ["Friday, May 29, 2026", "ECS II", "Day 4 Session 1 [Ms. Bhagya Hapuarachchi]"],
+      ["Saturday, May 30, 2026", "", "EAD2 - Lecture [Mr. Lahiru]"],
+      ["Sunday, May 31, 2026", "ITMP - Ms. Amila", ""]
+    ];
+
+    expect(parseScheduleRows(rows, "Asia/Colombo", "09:00", "16:00").map((event) => event.sourceKey)).toEqual([
+      "2026-05-29|ECS II",
+      "2026-05-30|EAD2",
+      "2026-05-31|ITMP"
+    ]);
+  });
+
   it("accepts Excel serial dates from raw workbook XML", () => {
     const rows = [[46168, "Robotics - Mr. Supun"]];
 

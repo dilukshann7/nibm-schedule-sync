@@ -46,8 +46,7 @@ export function parseScheduleRows(rows: SheetRow[], timeZone: string, startTime:
       continue;
     }
 
-    for (const cell of row.slice(1)) {
-      const cellText = String(cell ?? "");
+    for (const cellText of getScheduleTextCandidates(row)) {
       const moduleName = shouldSkipScheduleCell(cellText) ? "" : normalizeModuleName(cellText);
 
       if (!moduleName) {
@@ -79,14 +78,37 @@ function shouldSkipScheduleCell(value: string): boolean {
   return /\b(postponed|cancelled|canceled)\b/i.test(value);
 }
 
+function getScheduleTextCandidates(row: SheetRow): string[] {
+  const firstNameColumn = String(row[1] ?? "").trim();
+  const secondNameColumn = String(row[2] ?? "").trim();
+  const candidates: string[] = [];
+  const nameColumnsText = [firstNameColumn, secondNameColumn].filter(Boolean).join(" - ");
+
+  if (nameColumnsText && !shouldSkipScheduleCell(nameColumnsText)) {
+    candidates.push(nameColumnsText, firstNameColumn, secondNameColumn);
+  }
+
+  for (const cell of row.slice(3)) {
+    candidates.push(String(cell ?? ""));
+  }
+
+  return candidates;
+}
+
 export function normalizeModuleName(value: string): string {
-  return value
+  const moduleName = value
     .replace(/\[[^\]]*\]/g, " ")
     .replace(/\([^)]*\)/g, " ")
     .replace(/\b\d{1,2}(?::|\.)\d{2}\s*(?:am|pm)?\s*-\s*\d{1,2}(?::|\.)\d{2}\s*(?:am|pm)?\b/gi, " ")
     .split(/\s+-\s+/)[0]
     .replace(/\s+/g, " ")
     .trim();
+
+  return isScheduleDetailOnly(moduleName) ? "" : moduleName;
+}
+
+function isScheduleDetailOnly(value: string): boolean {
+  return /^(?:day\s+\d+\s+)?(?:session\s+\d+|lecture)$/i.test(value) || /^(?:mr|ms|mrs|dr)\.?\s+/i.test(value);
 }
 
 function parseDateCell(value: SheetRow[number]): string | null {
