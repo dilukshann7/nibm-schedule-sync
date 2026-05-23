@@ -2,7 +2,7 @@
 
 Small calendar sync app that downloads the public NIBM SharePoint Excel schedule and syncs it to Google Calendar.
 
-The sync creates one event per module per date. Every event is scheduled from `9:00 AM` to `5:00 PM` in `Asia/Colombo`, and event titles contain only the module name.
+The sync creates one event per module per date. Every event is scheduled from `9:00 AM` to `4:00 PM` in `Asia/Colombo`, and event titles contain only the module name.
 
 ## Hosted Cloudflare Worker
 
@@ -70,7 +70,7 @@ After connecting at least one account, trigger a sync manually:
 curl -X POST "https://nibm-calendar-sync.YOUR_SUBDOMAIN.workers.dev/admin/sync" -H "x-cron-secret: YOUR_TOKEN_ENCRYPTION_KEY"
 ```
 
-The scheduled Worker also runs daily from the cron in `wrangler.toml`.
+The scheduled Worker also runs daily from the cron in `wrangler.toml`. Cloudflare cron uses UTC, so the configured `30 10 * * *` runs at `4:00 PM` Sri Lanka time.
 
 ## Local CLI
 
@@ -91,6 +91,9 @@ npm run sync
 - Only creates, updates, or deletes events marked as managed by this tool.
 - Does not touch personal/manual Google Calendar events.
 - Hosted Worker stores Google refresh tokens encrypted in D1.
+- When the Excel sheet removes or moves a module/date, the next sync removes the old managed event and creates the new one.
+- Cells marked as postponed or cancelled are skipped instead of being added to the calendar.
+- If events appear as `3:30 AM - 10:30 AM`, your Google Calendar/device is showing the same Sri Lanka event in UTC. Set the calendar or device timezone to Sri Lanka/Colombo.
 
 ## Commands
 

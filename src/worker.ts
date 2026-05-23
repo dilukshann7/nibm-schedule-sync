@@ -1,15 +1,23 @@
 import { buildGoogleAuthUrl, encryptRefreshToken } from "./workerAuth.js";
 import { disconnectUser, getUserByEmail, upsertUser } from "./workerDb.js";
 import { exchangeCodeForTokens, fetchGoogleProfile } from "./workerGoogle.js";
-import { runScheduledSync } from "./workerSync.js";
+import { enqueueInitialUserSync, processNextSyncJob, runImmediateUserSync, runScheduledSync } from "./workerSync.js";
 import type { Env } from "./workerTypes.js";
 
 export default {
-  async fetch(request: Request, env: Env): Promise<Response> {
+  async fetch(request: Request, env: Env, ctx: ExecutionContext): Promise<Response> {
     const url = new URL(request.url);
 
     if (request.method === "GET" && url.pathname === "/") {
       return html(homePage(url.origin));
+    }
+
+    if (request.method === "GET" && url.pathname === "/privacy") {
+      return html(privacyPage());
+    }
+
+    if (request.method === "GET" && url.pathname === "/terms") {
+      return html(termsPage());
     }
 
     if (request.method === "GET" && url.pathname === "/auth/google") {
@@ -30,7 +38,7 @@ export default {
     }
 
     if (request.method === "GET" && url.pathname === "/auth/callback") {
-      return handleCallback(request, env, url);
+      return handleCallback(request, env, url, ctx);
     }
 
     if (request.method === "POST" && url.pathname === "/disconnect") {
@@ -51,18 +59,35 @@ export default {
       }
 
       await runScheduledSync(env);
+      ctx.waitUntil(processJobsAndContinue(env));
       return new Response("Sync complete");
+    }
+
+    if (request.method === "POST" && url.pathname === "/internal/process-sync-jobs") {
+      if (request.headers.get("x-cron-secret") !== env.TOKEN_ENCRYPTION_KEY) {
+        return new Response("Unauthorized", { status: 401 });
+      }
+
+      const result = await processNextSyncJob(env);
+
+      if (result.hasMore) {
+        ctx.waitUntil(processJobsAndContinue(env));
+      }
+
+      return Response.json(result);
     }
 
     return new Response("Not found", { status: 404 });
   },
 
   async scheduled(_event: ScheduledEvent, env: Env, ctx: ExecutionContext): Promise<void> {
-    ctx.waitUntil(runScheduledSync(env));
+    ctx.waitUntil(
+      runScheduledSync(env).then(() => processJobsAndContinue(env))
+    );
   }
 };
 
-async function handleCallback(request: Request, env: Env, url: URL): Promise<Response> {
+async function handleCallback(request: Request, env: Env, url: URL, ctx: ExecutionContext): Promise<Response> {
   const code = url.searchParams.get("code");
   const state = url.searchParams.get("state");
   const cookieState = parseCookie(request.headers.get("cookie") || "").oauth_state;
@@ -95,19 +120,46 @@ async function handleCallback(request: Request, env: Env, url: URL): Promise<Res
   });
 
   const user = await getUserByEmail(env.DB, profile.email);
+  let syncMessage = "Initial sync has been queued. It will process in small batches so Cloudflare's free Worker limits are not exceeded.";
+
+  if (user) {
+    try {
+      const stats = await runImmediateUserSync(env, user, tokens.access_token);
+      syncMessage = `Initial sync added the next month immediately: created ${stats.created}, updated ${stats.updated}, deleted ${stats.deleted}. Full backfill continues in the background.`;
+      await enqueueInitialUserSync(env, user);
+      ctx.waitUntil(processJobsAndContinue(env));
+    } catch (error) {
+      syncMessage = `Connected, but the immediate sync failed: ${error instanceof Error ? error.message : String(error)}. The daily cron will retry.`;
+    }
+  }
 
   return html(
     messagePage(
       "Calendar connected",
-      `${profile.email} is connected. Daily sync will create an NIBM Schedule calendar if it does not exist yet. Status: ${
-        user?.is_active ? "active" : "inactive"
-      }.`
+      `${profile.email} is connected. ${syncMessage} Status: ${user?.is_active ? "active" : "inactive"}.`
     ),
     200,
     {
       "Set-Cookie": "oauth_state=; Path=/; HttpOnly; Secure; SameSite=Lax; Max-Age=0"
     }
   );
+}
+
+async function kickoffJobProcessor(env: Env): Promise<void> {
+  await fetch(`${env.WORKER_ORIGIN}/internal/process-sync-jobs`, {
+    method: "POST",
+    headers: {
+      "x-cron-secret": env.TOKEN_ENCRYPTION_KEY
+    }
+  });
+}
+
+async function processJobsAndContinue(env: Env): Promise<void> {
+  const result = await processNextSyncJob(env);
+
+  if (result.hasMore) {
+    await kickoffJobProcessor(env);
+  }
 }
 
 function html(body: string, status = 200, headers: HeadersInit = {}): Response {
