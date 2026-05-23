@@ -17,7 +17,7 @@ database_name = "nibm-calendar-sync"
 database_id = "b886616d-e53a-46ee-aad1-3355cc180be6"
 
 [triggers]
-crons = ["30 10 * * *"]
+crons = ["0 * * * *"]
 
 [observability.logs]
 enabled = true

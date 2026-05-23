@@ -129,7 +129,7 @@ async function handleCallback(request: Request, env: Env, url: URL, ctx: Executi
       await enqueueInitialUserSync(env, user);
       ctx.waitUntil(processJobsAndContinue(env));
     } catch (error) {
-      syncMessage = `Connected, but the immediate sync failed: ${error instanceof Error ? error.message : String(error)}. The daily cron will retry.`;
+      syncMessage = `Connected, but the immediate sync failed: ${error instanceof Error ? error.message : String(error)}. The hourly sync will retry.`;
     }
   }
 
@@ -177,7 +177,7 @@ function homePage(origin: string): string {
     "NIBM Calendar Sync",
     `<main>
       <h1>NIBM Calendar Sync</h1>
-      <p>Connect Google Calendar once. This service checks the NIBM Excel schedule daily and syncs your modules into a dedicated Google Calendar.</p>
+      <p>Connect Google Calendar once. This service checks the NIBM Excel schedule hourly and syncs your modules into a dedicated Google Calendar.</p>
       <p><a class="button" href="${origin}/auth/google">Connect Google Calendar</a></p>
       <form method="post" action="/disconnect">
         <label>Email to disconnect</label>
@@ -202,7 +202,7 @@ function privacyPage(): string {
       <p>We also download the public NIBM schedule spreadsheet to create, update, or remove calendar events in your dedicated NIBM Schedule calendar.</p>
 
       <h2>How We Use Information</h2>
-      <p>We use your Google account information only to authenticate you and sync NIBM schedule events to your Google Calendar. We use sync logs only to troubleshoot failed syncs and confirm that daily syncs are running.</p>
+      <p>We use your Google account information only to authenticate you and sync NIBM schedule events to your Google Calendar. We use sync logs only to troubleshoot failed syncs and confirm that hourly syncs are running.</p>
 
       <h2>Google Calendar Access</h2>
       <p>The app requests Google Calendar permission so it can create and manage the calendar/events it creates for the NIBM schedule. It does not use your Google data for advertising, profiling, or unrelated analytics.</p>
@@ -240,7 +240,7 @@ function termsPage(): string {
       <p>The service creates, updates, and deletes events in the dedicated NIBM Schedule calendar it manages. It is not responsible for mistakes, delays, missing classes, spreadsheet errors, Google Calendar issues, or changes made outside the service.</p>
 
       <h2>Availability</h2>
-      <p>The service is provided as-is and may be unavailable, delayed, or stopped at any time. Daily sync depends on Cloudflare Workers, Google APIs, and the public SharePoint spreadsheet remaining available.</p>
+      <p>The service is provided as-is and may be unavailable, delayed, or stopped at any time. Hourly sync depends on Cloudflare Workers, Google APIs, and the public SharePoint spreadsheet remaining available.</p>
 
       <h2>User Responsibilities</h2>
       <p>You are responsible for checking your official university schedule and confirming event accuracy. This service is a convenience tool and should not be treated as the official source of schedule truth.</p>
