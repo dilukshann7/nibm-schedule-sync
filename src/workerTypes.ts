@@ -9,6 +9,7 @@ export type Env = {
   TIMEZONE: string;
   EVENT_START: string;
   EVENT_END: string;
+  WORKER_ORIGIN: string;
 };
 
 export type StoredUser = {
