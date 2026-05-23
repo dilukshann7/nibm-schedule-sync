@@ -1,4 +1,4 @@
-import type { StoredUser, SyncStats } from "./workerTypes.js";
+import type { StoredUser, SyncJob, SyncStats } from "./workerTypes.js";
 
 export async function upsertUser(
   db: D1Database,
@@ -92,5 +92,36 @@ export async function finishSyncRun(
       counts.error ? (counts.error instanceof Error ? counts.error.message : String(counts.error)) : null,
       id
     )
+    .run();
+}
+
+export async function createSyncJob(db: D1Database, userId: string, desiredEventsJson: string): Promise<void> {
+  await db
+    .prepare("INSERT INTO sync_jobs (id, user_id, desired_events) VALUES (?, ?, ?)")
+    .bind(crypto.randomUUID(), userId, desiredEventsJson)
+    .run();
+}
+
+export async function getNextPendingSyncJob(db: D1Database): Promise<SyncJob | null> {
+  return db
+    .prepare("SELECT * FROM sync_jobs WHERE status = 'pending' ORDER BY created_at ASC LIMIT 1")
+    .first<SyncJob>();
+}
+
+export async function getUserById(db: D1Database, userId: string): Promise<StoredUser | null> {
+  return db.prepare("SELECT * FROM users WHERE id = ?").bind(userId).first<StoredUser>();
+}
+
+export async function completeSyncJob(db: D1Database, jobId: string): Promise<void> {
+  await db
+    .prepare("UPDATE sync_jobs SET status = 'completed', completed_at = CURRENT_TIMESTAMP, updated_at = CURRENT_TIMESTAMP WHERE id = ?")
+    .bind(jobId)
+    .run();
+}
+
+export async function failSyncJob(db: D1Database, jobId: string, error: unknown): Promise<void> {
+  await db
+    .prepare("UPDATE sync_jobs SET status = 'failed', last_error = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?")
+    .bind(error instanceof Error ? error.message : String(error), jobId)
     .run();
 }

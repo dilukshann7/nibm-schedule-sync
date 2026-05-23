@@ -26,3 +26,10 @@ export type SyncStats = {
   updated: number;
   deleted: number;
 };
+
+export type SyncJob = {
+  id: string;
+  user_id: string;
+  desired_events: string;
+  status: string;
+};
