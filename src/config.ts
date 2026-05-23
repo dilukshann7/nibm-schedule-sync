@@ -22,7 +22,7 @@ export function loadConfig(): AppConfig {
     googleCalendarName: process.env.GOOGLE_CALENDAR_NAME || "NIBM Schedule",
     timeZone: process.env.TIMEZONE || "Asia/Colombo",
     eventStart: process.env.EVENT_START || "09:00",
-    eventEnd: process.env.EVENT_END || "17:00"
+    eventEnd: process.env.EVENT_END || "16:00"
   };
 }
 

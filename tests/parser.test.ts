@@ -19,13 +19,13 @@ describe("parseScheduleRows", () => {
       ["Thursday, May 28, 2026", "", ""]
     ];
 
-    expect(parseScheduleRows(rows, "Asia/Colombo", "09:00", "17:00")).toEqual([
+    expect(parseScheduleRows(rows, "Asia/Colombo", "09:00", "16:00")).toEqual([
       {
         sourceKey: "2026-05-26|Robotics",
         title: "Robotics",
         date: "2026-05-26",
         startDateTime: "2026-05-26T09:00:00",
-        endDateTime: "2026-05-26T17:00:00",
+        endDateTime: "2026-05-26T16:00:00",
         timeZone: "Asia/Colombo"
       },
       {
@@ -33,7 +33,7 @@ describe("parseScheduleRows", () => {
         title: "MAD",
         date: "2026-05-27",
         startDateTime: "2026-05-27T09:00:00",
-        endDateTime: "2026-05-27T17:00:00",
+        endDateTime: "2026-05-27T16:00:00",
         timeZone: "Asia/Colombo"
       }
     ]);

@@ -7,7 +7,7 @@ const event: DesiredEvent = {
   title: "Robotics",
   date: "2026-05-26",
   startDateTime: "2026-05-26T09:00:00",
-  endDateTime: "2026-05-26T17:00:00",
+  endDateTime: "2026-05-26T16:00:00",
   timeZone: "Asia/Colombo"
 };
 
@@ -16,7 +16,7 @@ describe("toGoogleEventBody", () => {
     expect(toGoogleEventBody(event)).toEqual({
       summary: "Robotics",
       start: { dateTime: "2026-05-26T09:00:00", timeZone: "Asia/Colombo" },
-      end: { dateTime: "2026-05-26T17:00:00", timeZone: "Asia/Colombo" },
+      end: { dateTime: "2026-05-26T16:00:00", timeZone: "Asia/Colombo" },
       extendedProperties: {
         private: {
           source: MANAGED_SOURCE,
@@ -34,7 +34,7 @@ describe("fromGoogleEvent", () => {
         id: "google-event-id",
         summary: "Robotics",
         start: { dateTime: "2026-05-26T09:00:00+05:30", timeZone: "Asia/Colombo" },
-        end: { dateTime: "2026-05-26T17:00:00+05:30", timeZone: "Asia/Colombo" },
+        end: { dateTime: "2026-05-26T16:00:00+05:30", timeZone: "Asia/Colombo" },
         extendedProperties: {
           private: {
             source: MANAGED_SOURCE,
@@ -47,7 +47,7 @@ describe("fromGoogleEvent", () => {
       sourceKey: "2026-05-26|Robotics",
       title: "Robotics",
       startDateTime: "2026-05-26T09:00:00",
-      endDateTime: "2026-05-26T17:00:00",
+      endDateTime: "2026-05-26T16:00:00",
       timeZone: "Asia/Colombo",
       managedSource: MANAGED_SOURCE
     });

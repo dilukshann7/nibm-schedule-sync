@@ -7,7 +7,7 @@ const desired = (sourceKey: string, title: string, date = "2026-05-26"): Desired
   title,
   date,
   startDateTime: `${date}T09:00:00`,
-  endDateTime: `${date}T17:00:00`,
+  endDateTime: `${date}T16:00:00`,
   timeZone: "Asia/Colombo"
 });
 
@@ -16,7 +16,7 @@ const existing = (id: string, sourceKey: string, title: string, date = "2026-05-
   sourceKey,
   title,
   startDateTime: `${date}T09:00:00`,
-  endDateTime: `${date}T17:00:00`,
+  endDateTime: `${date}T16:00:00`,
   timeZone: "Asia/Colombo",
   managedSource: managed ? MANAGED_SOURCE : "other"
 });
