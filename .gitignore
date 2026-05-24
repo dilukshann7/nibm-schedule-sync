@@ -3,3 +3,15 @@
 node_modules/
 dist/
 coverage/
+
+.wrangler/state/v3/d1/miniflare-D1DatabaseObject/d8fbb6d90853bd5b5d863c87be71a294d4b99ccd99bed0b4126b47ccd7ab4651.sqlite
+
+.wrangler/state/v3/d1/miniflare-D1DatabaseObject/d8fbb6d90853bd5b5d863c87be71a294d4b99ccd99bed0b4126b47ccd7ab4651.sqlite-shm
+
+.wrangler/state/v3/d1/miniflare-D1DatabaseObject/d8fbb6d90853bd5b5d863c87be71a294d4b99ccd99bed0b4126b47ccd7ab4651.sqlite-wal
+
+.wrangler/state/v3/d1/miniflare-D1DatabaseObject/metadata.sqlite
+
+.wrangler/state/v3/d1/miniflare-D1DatabaseObject/metadata.sqlite-shm
+
+.wrangler/state/v3/d1/miniflare-D1DatabaseObject/metadata.sqlite-wal
