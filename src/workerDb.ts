@@ -96,6 +96,21 @@ export async function finishSyncRun(
 }
 
 export async function createSyncJob(db: D1Database, userId: string, desiredEventsJson: string): Promise<void> {
+  const updated = await db
+    .prepare(
+      `UPDATE sync_jobs
+       SET desired_events = ?,
+           updated_at = CURRENT_TIMESTAMP,
+           last_error = NULL
+       WHERE user_id = ? AND status = 'pending'`
+    )
+    .bind(desiredEventsJson, userId)
+    .run();
+
+  if (updated.meta.changes > 0) {
+    return;
+  }
+
   await db
     .prepare("INSERT INTO sync_jobs (id, user_id, desired_events) VALUES (?, ?, ?)")
     .bind(crypto.randomUUID(), userId, desiredEventsJson)
