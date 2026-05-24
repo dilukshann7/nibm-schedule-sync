@@ -59,7 +59,7 @@ export default {
       }
 
       await runScheduledSync(env);
-      ctx.waitUntil(processJobsAndContinue(env));
+      ctx.waitUntil(processNextSyncJob(env));
       return new Response("Sync complete");
     }
 
@@ -70,10 +70,6 @@ export default {
 
       const result = await processNextSyncJob(env);
 
-      if (result.hasMore) {
-        ctx.waitUntil(processJobsAndContinue(env));
-      }
-
       return Response.json(result);
     }
 
@@ -82,7 +78,7 @@ export default {
 
   async scheduled(_event: ScheduledEvent, env: Env, ctx: ExecutionContext): Promise<void> {
     ctx.waitUntil(
-      runScheduledSync(env).then(() => processJobsAndContinue(env))
+      runScheduledSync(env).then(() => processNextSyncJob(env))
     );
   }
 };
@@ -125,9 +121,8 @@ async function handleCallback(request: Request, env: Env, url: URL, ctx: Executi
   if (user) {
     try {
       const stats = await runImmediateUserSync(env, user, tokens.access_token);
-      syncMessage = `Initial sync added the next month immediately: created ${stats.created}, updated ${stats.updated}, deleted ${stats.deleted}. Full backfill continues in the background.`;
+      syncMessage = `Initial sync added the first events immediately: created ${stats.created}, updated ${stats.updated}, deleted ${stats.deleted}. Future hourly syncs will keep adding, updating, and removing managed events in small batches.`;
       await enqueueInitialUserSync(env, user);
-      ctx.waitUntil(processJobsAndContinue(env));
     } catch (error) {
       syncMessage = `Connected, but the immediate sync failed: ${error instanceof Error ? error.message : String(error)}. The hourly sync will retry.`;
     }
@@ -143,23 +138,6 @@ async function handleCallback(request: Request, env: Env, url: URL, ctx: Executi
       "Set-Cookie": "oauth_state=; Path=/; HttpOnly; Secure; SameSite=Lax; Max-Age=0"
     }
   );
-}
-
-async function kickoffJobProcessor(env: Env): Promise<void> {
-  await fetch(`${env.WORKER_ORIGIN}/internal/process-sync-jobs`, {
-    method: "POST",
-    headers: {
-      "x-cron-secret": env.TOKEN_ENCRYPTION_KEY
-    }
-  });
-}
-
-async function processJobsAndContinue(env: Env): Promise<void> {
-  const result = await processNextSyncJob(env);
-
-  if (result.hasMore) {
-    await kickoffJobProcessor(env);
-  }
 }
 
 function html(body: string, status = 200, headers: HeadersInit = {}): Response {
