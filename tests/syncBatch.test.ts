@@ -21,11 +21,29 @@ describe("limitSyncPlan", () => {
 
     expect(limitSyncPlan(plan, 3)).toEqual({
       limitedPlan: {
-        toCreate: [event("create-1"), event("create-2")],
+        toCreate: [event("create-1")],
         toUpdate: [{ id: "update-1", event: event("update-1") }],
-        toDelete: []
+        toDelete: ["delete-1"]
       },
       operationCount: 3,
+      hasMore: true
+    });
+  });
+
+  it("prioritizes updates and deletes before future creates", () => {
+    const plan: SyncPlan = {
+      toCreate: [event("create-1"), event("create-2")],
+      toUpdate: [{ id: "update-1", event: event("update-1") }],
+      toDelete: ["delete-1"]
+    };
+
+    expect(limitSyncPlan(plan, 2)).toEqual({
+      limitedPlan: {
+        toCreate: [],
+        toUpdate: [{ id: "update-1", event: event("update-1") }],
+        toDelete: ["delete-1"]
+      },
+      operationCount: 2,
       hasMore: true
     });
   });

@@ -12,17 +12,17 @@ export function limitSyncPlan(plan: SyncPlan, maxOperations: number): {
   };
   let remaining = maxOperations;
 
-  limitedPlan.toCreate = plan.toCreate.slice(0, remaining);
-  remaining -= limitedPlan.toCreate.length;
-
-  if (remaining > 0) {
-    limitedPlan.toUpdate = plan.toUpdate.slice(0, remaining);
-    remaining -= limitedPlan.toUpdate.length;
-  }
+  limitedPlan.toUpdate = plan.toUpdate.slice(0, remaining);
+  remaining -= limitedPlan.toUpdate.length;
 
   if (remaining > 0) {
     limitedPlan.toDelete = plan.toDelete.slice(0, remaining);
     remaining -= limitedPlan.toDelete.length;
+  }
+
+  if (remaining > 0) {
+    limitedPlan.toCreate = plan.toCreate.slice(0, remaining);
+    remaining -= limitedPlan.toCreate.length;
   }
 
   const operationCount = maxOperations - remaining;
