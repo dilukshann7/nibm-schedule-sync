@@ -27,8 +27,8 @@ import {
 import type { Env, StoredUser, SyncStats } from "./workerTypes.js";
 import type { DesiredEvent } from "./types.js";
 
-const MAX_CALENDAR_MUTATIONS_PER_INVOCATION = 20;
-const MAX_IMMEDIATE_CALENDAR_MUTATIONS = 30;
+const MAX_CALENDAR_MUTATIONS_PER_INVOCATION = 10;
+const MAX_IMMEDIATE_CALENDAR_MUTATIONS = 10;
 const IMMEDIATE_WINDOW_DAYS = 35;
 
 export async function runScheduledSync(env: Env): Promise<void> {
