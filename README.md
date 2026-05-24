@@ -39,7 +39,7 @@ In Google Cloud Console:
 - Add this authorized redirect URI after replacing the Worker subdomain:
 
 ```text
-https://nibm-calendar-sync.YOUR_SUBDOMAIN.workers.dev/auth/callback
+https://calsync.dilukshan.dev/auth/callback
 ```
 
 Use the same callback in `wrangler.toml` as `GOOGLE_REDIRECT_URI`.
@@ -67,7 +67,7 @@ Open the deployed Worker URL and click `Connect Google Calendar`.
 After connecting at least one account, trigger a sync manually:
 
 ```powershell
-curl -X POST "https://nibm-calendar-sync.YOUR_SUBDOMAIN.workers.dev/admin/sync" -H "x-cron-secret: YOUR_TOKEN_ENCRYPTION_KEY"
+curl -X POST "https://calsync.dilukshan.dev/admin/sync" -H "x-cron-secret: YOUR_TOKEN_ENCRYPTION_KEY"
 ```
 
 The scheduled Worker also runs hourly from the cron in `wrangler.toml`. Cloudflare cron uses UTC, so the configured `0 * * * *` checks for schedule changes at the start of every hour.
