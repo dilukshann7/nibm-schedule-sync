@@ -70,14 +70,15 @@ describe("parseScheduleRows", () => {
     ]);
   });
 
-  it("skips postponed and cancelled schedule cells", () => {
+  it("skips postponed, cancelled, and rescheduled schedule cells", () => {
     const rows = [
       ["Tuesday, May 26, 2026", "Robotics - postponed", "MAD - cancelled"],
-      ["Wednesday, May 27, 2026", "ECS II - Day 1 Session 1 [Ms. Bhagya]", ""]
+      ["Wednesday, May 27, 2026", "MAD - Ishara Dissanayake - Rescheduled", "MAD - Ishara Dissanayake - Rescheduled"],
+      ["Thursday, May 28, 2026", "ECS II - Day 1 Session 1 [Ms. Bhagya]", ""]
     ];
 
     expect(parseScheduleRows(rows, "Asia/Colombo", "09:00", "16:00").map((event) => event.sourceKey)).toEqual([
-      "2026-05-27|ECS II"
+      "2026-05-28|ECS II"
     ]);
   });
 });

@@ -75,7 +75,7 @@ export function parseScheduleRows(rows: SheetRow[], timeZone: string, startTime:
 }
 
 function shouldSkipScheduleCell(value: string): boolean {
-  return /\b(postponed|cancelled|canceled)\b/i.test(value);
+  return /\b(postponed|cancelled|canceled|rescheduled)\b/i.test(value);
 }
 
 function getScheduleTextCandidates(row: SheetRow): string[] {
