@@ -15,6 +15,7 @@ import {
   createSyncRun,
   completeSyncJob,
   createSyncJob,
+  deferSyncJob,
   failSyncJob,
   finishSyncRun,
   getActiveUsers,
@@ -124,6 +125,8 @@ export async function processNextSyncJob(env: Env): Promise<{ processed: boolean
     if (!result.hasMore) {
       await completeSyncJob(env.DB, job.id);
       await markUserSynced(env.DB, user.id);
+    } else {
+      await deferSyncJob(env.DB, job.id);
     }
 
     return { processed: true, hasMore: result.hasMore || Boolean(await getNextPendingSyncJob(env.DB)), stats: result.stats };
