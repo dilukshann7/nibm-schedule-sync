@@ -123,6 +123,13 @@ export async function getNextPendingSyncJob(db: D1Database): Promise<SyncJob | n
     .first<SyncJob>();
 }
 
+export async function deferSyncJob(db: D1Database, jobId: string): Promise<void> {
+  await db
+    .prepare("UPDATE sync_jobs SET created_at = CURRENT_TIMESTAMP, updated_at = CURRENT_TIMESTAMP WHERE id = ? AND status = 'pending'")
+    .bind(jobId)
+    .run();
+}
+
 export async function getUserById(db: D1Database, userId: string): Promise<StoredUser | null> {
   return db.prepare("SELECT * FROM users WHERE id = ?").bind(userId).first<StoredUser>();
 }
