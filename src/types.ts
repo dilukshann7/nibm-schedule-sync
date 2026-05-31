@@ -17,6 +17,7 @@ export type CalendarEvent = {
   endDateTime: string;
   timeZone: string;
   managedSource: string;
+  metadataMissing?: boolean;
 };
 
 export type SyncPlan = {
