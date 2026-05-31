@@ -35,6 +35,7 @@ export function planCalendarSync(desiredEvents: DesiredEvent[], existingEvents: 
 
 function eventChanged(existing: CalendarEvent, desired: DesiredEvent): boolean {
   return (
+    existing.metadataMissing === true ||
     existing.title !== desired.title ||
     existing.startDateTime !== desired.startDateTime ||
     existing.endDateTime !== desired.endDateTime ||

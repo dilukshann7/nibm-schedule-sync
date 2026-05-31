@@ -21,6 +21,11 @@ const existing = (id: string, sourceKey: string, title: string, date = "2026-05-
   managedSource: managed ? MANAGED_SOURCE : "other"
 });
 
+const legacyExisting = (id: string, sourceKey: string, title: string, date = "2026-05-26"): CalendarEvent => ({
+  ...existing(id, sourceKey, title, date),
+  metadataMissing: true
+});
+
 describe("planCalendarSync", () => {
   it("creates missing events", () => {
     const plan = planCalendarSync([desired("2026-05-26|Robotics", "Robotics")], []);
@@ -64,6 +69,15 @@ describe("planCalendarSync", () => {
 
     expect(plan.toCreate.map((event) => event.sourceKey)).toEqual(["2026-05-26|Robotics"]);
     expect(plan.toUpdate).toEqual([]);
+    expect(plan.toDelete).toEqual([]);
+  });
+
+  it("updates legacy managed events with matching source keys so metadata is restored", () => {
+    const event = desired("2026-06-01|ECS II", "ECS II", "2026-06-01");
+    const plan = planCalendarSync([event], [legacyExisting("legacy-event", "2026-06-01|ECS II", "ECS II", "2026-06-01")]);
+
+    expect(plan.toCreate).toEqual([]);
+    expect(plan.toUpdate).toEqual([{ id: "legacy-event", event }]);
     expect(plan.toDelete).toEqual([]);
   });
 });
