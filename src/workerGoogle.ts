@@ -79,7 +79,6 @@ export async function listManagedEvents(accessToken: string, calendarId: string)
     const url = new URL(`https://www.googleapis.com/calendar/v3/calendars/${encodeURIComponent(calendarId)}/events`);
     url.searchParams.set("singleEvents", "true");
     url.searchParams.set("maxResults", "2500");
-    url.searchParams.append("privateExtendedProperty", `source=${MANAGED_SOURCE}`);
 
     if (pageToken) {
       url.searchParams.set("pageToken", pageToken);
@@ -140,21 +139,38 @@ export function toGoogleEventBody(event: DesiredEvent): GoogleEvent {
 }
 
 export function fromGoogleEvent(event: GoogleEvent): CalendarEvent | null {
-  const sourceKey = event.extendedProperties?.private?.sourceKey;
-  const managedSource = event.extendedProperties?.private?.source;
+  const id = event.id;
+  const title = event.summary || "";
+  const startDateTime = stripOffset(event.start?.dateTime || "");
+  const endDateTime = stripOffset(event.end?.dateTime || "");
+  const explicitSourceKey = event.extendedProperties?.private?.sourceKey;
+  const explicitSource = event.extendedProperties?.private?.source;
 
-  if (!event.id || !sourceKey || !managedSource) {
+  if (!id || !title || !startDateTime || !endDateTime) {
     return null;
   }
 
+  if (explicitSource && explicitSource !== MANAGED_SOURCE) {
+    return null;
+  }
+
+  const sourceKey = explicitSourceKey || inferLegacySourceKey(startDateTime, title);
+
+  if (!sourceKey) {
+    return null;
+  }
+
+  const metadataMissing = explicitSource !== MANAGED_SOURCE || explicitSourceKey !== sourceKey;
+
   return {
-    id: event.id,
+    id,
     sourceKey,
-    title: event.summary || "",
-    startDateTime: stripOffset(event.start?.dateTime || ""),
-    endDateTime: stripOffset(event.end?.dateTime || ""),
+    title,
+    startDateTime,
+    endDateTime,
     timeZone: event.start?.timeZone || "",
-    managedSource
+    managedSource: MANAGED_SOURCE,
+    ...(metadataMissing ? { metadataMissing: true } : {})
   };
 }
 

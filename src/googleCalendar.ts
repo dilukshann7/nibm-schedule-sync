@@ -82,28 +82,44 @@ export async function listManagedEvents(calendar: calendar_v3.Calendar, calendar
   do {
     const response = await calendar.events.list({
       calendarId,
-      privateExtendedProperty: [`source=${MANAGED_SOURCE}`],
       singleEvents: true,
       maxResults: 2500,
       pageToken
     });
 
     for (const item of response.data.items ?? []) {
-      const sourceKey = item.extendedProperties?.private?.sourceKey;
-      const managedSource = item.extendedProperties?.private?.source;
+      const id = item.id;
+      const title = item.summary || "";
+      const startDateTime = stripOffset(item.start?.dateTime || "");
+      const endDateTime = stripOffset(item.end?.dateTime || "");
+      const explicitSourceKey = item.extendedProperties?.private?.sourceKey;
+      const explicitSource = item.extendedProperties?.private?.source;
 
-      if (!item.id || !sourceKey || !managedSource) {
+      if (!id || !title || !startDateTime || !endDateTime) {
         continue;
       }
 
+      if (explicitSource && explicitSource !== MANAGED_SOURCE) {
+        continue;
+      }
+
+      const sourceKey = explicitSourceKey || inferLegacySourceKey(startDateTime, title);
+
+      if (!sourceKey) {
+        continue;
+      }
+
+      const metadataMissing = explicitSource !== MANAGED_SOURCE || explicitSourceKey !== sourceKey;
+
       events.push({
-        id: item.id,
+        id,
         sourceKey,
-        title: item.summary || "",
-        startDateTime: item.start?.dateTime?.replace(/(?:Z|[+-]\d{2}:\d{2})$/, "") || "",
-        endDateTime: item.end?.dateTime?.replace(/(?:Z|[+-]\d{2}:\d{2})$/, "") || "",
+        title,
+        startDateTime,
+        endDateTime,
         timeZone: item.start?.timeZone || "",
-        managedSource
+        managedSource: MANAGED_SOURCE,
+        ...(metadataMissing ? { metadataMissing: true } : {})
       });
     }
 
