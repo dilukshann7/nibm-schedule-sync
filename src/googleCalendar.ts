@@ -155,6 +155,20 @@ function toGoogleEvent(event: DesiredEvent): calendar_v3.Schema$Event {
   };
 }
 
+function stripOffset(value: string): string {
+  return value.replace(/(?:Z|[+-]\d{2}:\d{2})$/, "");
+}
+
+function inferLegacySourceKey(startDateTime: string, title: string): string | null {
+  const date = startDateTime.slice(0, 10);
+
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(date)) {
+    return null;
+  }
+
+  return `${date}|${title}`;
+}
+
 function extractCode(value: string): string {
   const trimmed = value.trim();
 

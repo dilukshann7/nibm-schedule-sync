@@ -199,3 +199,13 @@ async function readGoogleResponse<T>(response: Response): Promise<T> {
 function stripOffset(value: string): string {
   return value.replace(/(?:Z|[+-]\d{2}:\d{2})$/, "");
 }
+
+function inferLegacySourceKey(startDateTime: string, title: string): string | null {
+  const date = startDateTime.slice(0, 10);
+
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(date)) {
+    return null;
+  }
+
+  return `${date}|${title}`;
+}
