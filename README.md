@@ -70,7 +70,7 @@ After connecting at least one account, trigger a sync manually:
 curl -X POST "https://calsync.dilukshan.dev/admin/sync" -H "x-cron-secret: YOUR_TOKEN_ENCRYPTION_KEY"
 ```
 
-The scheduled Worker also runs hourly from the cron in `wrangler.toml`. Cloudflare cron uses UTC, so the configured `0 * * * *` checks for schedule changes at the start of every hour.
+The scheduled Worker also runs every 30 minutes from the cron in `wrangler.toml`. Cloudflare cron uses UTC, so the configured `*/30 * * * *` checks for schedule changes at the start and middle of every hour.
 
 ## Local CLI
 
