@@ -109,6 +109,76 @@ export function normalizeModuleName(value: string): string {
   return isScheduleDetailOnly(moduleName) ? "" : moduleName;
 }
 
+function normalizeScheduleTitle(value: string): string {
+  return isExamCell(value) ? normalizeExamName(value) : normalizeModuleName(value);
+}
+
+function normalizeExamName(value: string): string {
+  const examName = value
+    .replace(/\[[^\]]*\]/g, " ")
+    .replace(/\([^)]*\)/g, " ")
+    .replace(TIME_RANGE_PATTERN, " ")
+    .replace(/\bscheduled\b/gi, " ")
+    .replace(/\s*-\s*/g, " - ")
+    .replace(/(?:\s+-\s+)+$/g, "")
+    .replace(/\s+/g, " ")
+    .trim();
+
+  return isScheduleDetailOnly(examName) ? "" : examName;
+}
+
+function isExamCell(value: string): boolean {
+  return /\b(?:final\s+examination|examination|exam)\b/i.test(value);
+}
+
+function getScheduleTimeRange(value: string, defaultStartTime: string, defaultEndTime: string): { startTime: string; endTime: string } {
+  if (!isExamCell(value)) {
+    return { startTime: defaultStartTime, endTime: defaultEndTime };
+  }
+
+  return parseTimeRange(value) ?? { startTime: defaultStartTime, endTime: defaultEndTime };
+}
+
+function parseTimeRange(value: string): { startTime: string; endTime: string } | null {
+  const match = value.match(TIME_RANGE_CAPTURE_PATTERN);
+
+  if (!match) {
+    return null;
+  }
+
+  const [, startHour, startMinute, startMeridiem, endHour, endMinute, endMeridiem] = match;
+  const inferredStartMeridiem = startMeridiem || endMeridiem;
+  const startTime = toTwentyFourHourTime(Number(startHour), Number(startMinute), inferredStartMeridiem);
+  const endTime = toTwentyFourHourTime(Number(endHour), Number(endMinute), endMeridiem);
+
+  if (!startTime || !endTime) {
+    return null;
+  }
+
+  return { startTime, endTime };
+}
+
+function toTwentyFourHourTime(hour: number, minute: number, meridiem?: string): string | null {
+  if (!Number.isInteger(hour) || !Number.isInteger(minute) || minute < 0 || minute > 59) {
+    return null;
+  }
+
+  let normalizedHour = hour;
+  const normalizedMeridiem = meridiem?.toLowerCase();
+
+  if (normalizedMeridiem === "am") {
+    normalizedHour = hour === 12 ? 0 : hour;
+  } else if (normalizedMeridiem === "pm") {
+    normalizedHour = hour === 12 ? 12 : hour + 12;
+  }
+
+  if (normalizedHour < 0 || normalizedHour > 23) {
+    return null;
+  }
+
+  return `${String(normalizedHour).padStart(2, "0")}:${String(minute).padStart(2, "0")}`;
+}
+
 function isScheduleDetailOnly(value: string): boolean {
   return /^(?:day\s+\d+\s+)?(?:session\s+\d+|lecture)$/i.test(value) || /^(?:mr|ms|mrs|dr)\.?\s+/i.test(value);
 }
