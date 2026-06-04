@@ -15,6 +15,8 @@ const MONTHS: Record<string, string> = {
   november: "11",
   december: "12"
 };
+const TIME_RANGE_PATTERN = /\b\d{1,2}(?::|\.)\d{2}\s*(?:am|pm)?\s*-\s*\d{1,2}(?::|\.)\d{2}\s*(?:am|pm)?\b/gi;
+const TIME_RANGE_CAPTURE_PATTERN = /\b(\d{1,2})(?::|\.)(\d{2})\s*(am|pm)?\s*-\s*(\d{1,2})(?::|\.)(\d{2})\s*(am|pm)?\b/i;
 
 export type SheetRow = Array<string | number | Date | null | undefined>;
 
