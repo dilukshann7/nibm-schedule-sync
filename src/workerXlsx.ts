@@ -46,11 +46,11 @@ function readSheetRows(sheetXml: string, sharedStrings: string[]): SheetRow[] {
 
   for (const rowMatch of sheetXml.matchAll(rowPattern)) {
     const row: SheetRow = [];
-    const cellPattern = /<c\b([^>]*)>([\s\S]*?)<\/c>/g;
+    const cellPattern = /<c\b([^>]*?)(?:\/>|>([\s\S]*?)<\/c>)/g;
 
     for (const cellMatch of rowMatch[1].matchAll(cellPattern)) {
       const attributes = cellMatch[1];
-      const body = cellMatch[2];
+      const body = cellMatch[2] ?? "";
       const reference = attributes.match(/\br="([A-Z]+\d+)"/)?.[1];
       const columnIndex = reference ? columnNameToIndex(reference.replace(/\d+$/, "")) : row.length;
       row[columnIndex] = readCellValue(attributes, body, sharedStrings);

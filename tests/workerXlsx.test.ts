@@ -39,6 +39,35 @@ function workbookZip(): ArrayBuffer {
   return zipped.buffer.slice(zipped.byteOffset, zipped.byteOffset + zipped.byteLength);
 }
 
+function workbookZipWithSelfClosingCellBeforeScheduleText(): ArrayBuffer {
+  const files: Record<string, Uint8Array> = {
+    "[Content_Types].xml": strToU8(`<?xml version="1.0" encoding="UTF-8"?>
+      <Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types">
+        <Override PartName="/xl/workbook.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet.main+xml"/>
+        <Override PartName="/xl/worksheets/sheet1.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.worksheet+xml"/>
+        <Override PartName="/xl/sharedStrings.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.sharedStrings+xml"/>
+      </Types>`),
+    "xl/workbook.xml": strToU8("<workbook />"),
+    "xl/sharedStrings.xml": strToU8(`<?xml version="1.0" encoding="UTF-8"?>
+      <sst xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main">
+        <si><t>ITMP - Final Examination 1.00pm- 4.00pm - scheduled</t></si>
+      </sst>`),
+    "xl/worksheets/sheet1.xml": strToU8(`<?xml version="1.0" encoding="UTF-8"?>
+      <worksheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main">
+        <sheetData>
+          <row r="93" spans="1:3">
+            <c r="A93" s="2"><v>46204</v></c>
+            <c r="B93" s="4"/>
+            <c r="C93" s="26" t="s"><v>0</v></c>
+          </row>
+        </sheetData>
+      </worksheet>`)
+  };
+
+  const zipped = zipSync(files);
+  return zipped.buffer.slice(zipped.byteOffset, zipped.byteOffset + zipped.byteLength);
+}
+
 describe("parseWorkbookForWorker", () => {
   it("parses xlsx XML without the Node xlsx package", () => {
     expect(parseWorkbookForWorker(workbookZip(), "Asia/Colombo", "09:00", "16:00")).toEqual([
@@ -56,6 +85,19 @@ describe("parseWorkbookForWorker", () => {
         date: "2026-05-27",
         startDateTime: "2026-05-27T09:00:00",
         endDateTime: "2026-05-27T16:00:00",
+        timeZone: "Asia/Colombo"
+      }
+    ]);
+  });
+
+  it("does not let a self-closing blank B cell swallow the C-column schedule text", () => {
+    expect(parseWorkbookForWorker(workbookZipWithSelfClosingCellBeforeScheduleText(), "Asia/Colombo", "09:00", "16:00")).toEqual([
+      {
+        sourceKey: "2026-07-01|ITMP - Final Examination",
+        title: "ITMP - Final Examination",
+        date: "2026-07-01",
+        startDateTime: "2026-07-01T13:00:00",
+        endDateTime: "2026-07-01T16:00:00",
         timeZone: "Asia/Colombo"
       }
     ]);
