@@ -81,4 +81,39 @@ describe("parseScheduleRows", () => {
       "2026-05-28|ECS II"
     ]);
   });
+
+  it("syncs exam rows with their explicit exam time", () => {
+    const rows = [
+      ["Monday, September 21, 2026", "", "Statistics for Computing - Final Examination - 1.00pm - 4.00pm"],
+      ["Wednesday, September 23, 2026", "", "DM 2- Exam 1.00pm-4.00pm"],
+      ["Wednesday, July 1, 2026", "", "ITMP - Final Examination 1.00pm- 4.00pm - scheduled"]
+    ];
+
+    expect(parseScheduleRows(rows, "Asia/Colombo", "09:00", "16:00")).toEqual([
+      {
+        sourceKey: "2026-07-01|ITMP - Final Examination",
+        title: "ITMP - Final Examination",
+        date: "2026-07-01",
+        startDateTime: "2026-07-01T13:00:00",
+        endDateTime: "2026-07-01T16:00:00",
+        timeZone: "Asia/Colombo"
+      },
+      {
+        sourceKey: "2026-09-21|Statistics for Computing - Final Examination",
+        title: "Statistics for Computing - Final Examination",
+        date: "2026-09-21",
+        startDateTime: "2026-09-21T13:00:00",
+        endDateTime: "2026-09-21T16:00:00",
+        timeZone: "Asia/Colombo"
+      },
+      {
+        sourceKey: "2026-09-23|DM 2 - Exam",
+        title: "DM 2 - Exam",
+        date: "2026-09-23",
+        startDateTime: "2026-09-23T13:00:00",
+        endDateTime: "2026-09-23T16:00:00",
+        timeZone: "Asia/Colombo"
+      }
+    ]);
+  });
 });
