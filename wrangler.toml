@@ -1,6 +1,7 @@
 name = "nibm-calendar-sync"
 main = "src/worker.ts"
 compatibility_date = "2026-05-22"
+account_id = "0e0c40249a6b03608d5a4d3352a9837f"
 
 [vars]
 GOOGLE_REDIRECT_URI = "https://calsync.dilukshan.dev/auth/callback"
