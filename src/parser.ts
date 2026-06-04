@@ -49,21 +49,22 @@ export function parseScheduleRows(rows: SheetRow[], timeZone: string, startTime:
     }
 
     for (const cellText of getScheduleTextCandidates(row)) {
-      const moduleName = shouldSkipScheduleCell(cellText) ? "" : normalizeModuleName(cellText);
+      const moduleName = shouldSkipScheduleCell(cellText) ? "" : normalizeScheduleTitle(cellText);
 
       if (!moduleName) {
         continue;
       }
 
       const sourceKey = `${date}|${moduleName}`;
+      const timeRange = getScheduleTimeRange(cellText, startTime, endTime);
 
       if (!eventsBySourceKey.has(sourceKey)) {
         eventsBySourceKey.set(sourceKey, {
           sourceKey,
           title: moduleName,
           date,
-          startDateTime: `${date}T${startTime}:00`,
-          endDateTime: `${date}T${endTime}:00`,
+          startDateTime: `${date}T${timeRange.startTime}:00`,
+          endDateTime: `${date}T${timeRange.endTime}:00`,
           timeZone
         });
       }
@@ -101,7 +102,7 @@ export function normalizeModuleName(value: string): string {
   const moduleName = value
     .replace(/\[[^\]]*\]/g, " ")
     .replace(/\([^)]*\)/g, " ")
-    .replace(/\b\d{1,2}(?::|\.)\d{2}\s*(?:am|pm)?\s*-\s*\d{1,2}(?::|\.)\d{2}\s*(?:am|pm)?\b/gi, " ")
+    .replace(TIME_RANGE_PATTERN, " ")
     .split(/\s+-\s+/)[0]
     .replace(/\s+/g, " ")
     .trim();
