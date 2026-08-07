@@ -62,6 +62,14 @@ npm run deploy
 
 Open the deployed Worker URL and click `Connect Google Calendar`.
 
+To use Apple Calendar, subscribe to this read-only feed in Calendar:
+
+```text
+https://calsync.dilukshan.dev/calendar.ics
+```
+
+On iPhone or iPad, open Calendar, choose `Add Calendar` → `Add Subscription Calendar`, and paste the URL. On Mac, choose `File` → `New Calendar Subscription`. Apple controls the refresh timing for subscribed calendars; unsubscribe from Calendar when you no longer need it.
+
 ### 7. Manual sync test
 
 After connecting at least one account, trigger a sync manually:
@@ -91,6 +99,7 @@ npm run sync
 - Only creates, updates, or deletes events marked as managed by this tool.
 - Does not touch personal/manual Google Calendar events.
 - Hosted Worker stores Google refresh tokens encrypted in D1.
+- The public `/calendar.ics` feed mirrors the schedule for read-only Apple Calendar subscriptions and does not require Apple credentials.
 - When the Excel sheet removes or moves a module/date, the next sync removes the old managed event and creates the new one.
 - Cells marked as postponed or cancelled are skipped instead of being added to the calendar.
 - If events appear as `3:30 AM - 10:30 AM`, your Google Calendar/device is showing the same Sri Lanka event in UTC. Set the calendar or device timezone to Sri Lanka/Colombo.

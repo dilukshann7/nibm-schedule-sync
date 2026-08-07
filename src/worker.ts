@@ -1,7 +1,10 @@
 import { buildGoogleAuthUrl, encryptRefreshToken } from "./workerAuth.js";
+import { buildIcsCalendar } from "./ical.js";
 import { disconnectUser, getUserByEmail, upsertUser } from "./workerDb.js";
 import { exchangeCodeForTokens, fetchGoogleProfile } from "./workerGoogle.js";
+import { downloadExcelForWorker } from "./workerExcel.js";
 import { enqueueInitialUserSync, processNextSyncJob, runImmediateUserSync, runScheduledSync } from "./workerSync.js";
+import { parseWorkbookForWorker } from "./workerXlsx.js";
 import type { Env } from "./workerTypes.js";
 
 export default {
@@ -18,6 +21,10 @@ export default {
 
     if (request.method === "GET" && url.pathname === "/terms") {
       return html(termsPage());
+    }
+
+    if (request.method === "GET" && url.pathname === "/calendar.ics") {
+      return calendarFeed(env);
     }
 
     if (request.method === "GET" && url.pathname === "/auth/google") {
@@ -150,6 +157,32 @@ function html(body: string, status = 200, headers: HeadersInit = {}): Response {
   });
 }
 
+async function calendarFeed(env: Env): Promise<Response> {
+  try {
+    const workbook = await downloadExcelForWorker(env.SHAREPOINT_EXCEL_URL);
+    const events = parseWorkbookForWorker(workbook, env.TIMEZONE, env.EVENT_START, env.EVENT_END);
+
+    return new Response(buildIcsCalendar(events, env.GOOGLE_CALENDAR_NAME, env.TIMEZONE), {
+      status: 200,
+      headers: {
+        "Content-Type": "text/calendar; charset=utf-8",
+        "Cache-Control": "public, max-age=900, s-maxage=900",
+        "X-Content-Type-Options": "nosniff"
+      }
+    });
+  } catch (error) {
+    console.error("Calendar feed generation failed", error);
+
+    return new Response("Calendar feed unavailable", {
+      status: 502,
+      headers: {
+        "Content-Type": "text/plain; charset=utf-8",
+        "Cache-Control": "no-store"
+      }
+    });
+  }
+}
+
 function homePage(origin: string): string {
   return page(
     "NIBM Calendar Sync",
@@ -157,6 +190,10 @@ function homePage(origin: string): string {
       <h1>NIBM Calendar Sync</h1>
       <p>Connect Google Calendar once. This service checks the NIBM Excel schedule every 30 minutes and syncs your modules into a dedicated Google Calendar.</p>
       <p><a class="button" href="${origin}/auth/google">Connect Google Calendar</a></p>
+      <h2>Apple Calendar</h2>
+      <p>Subscribe to the public, read-only schedule feed on iPhone, iPad, or Mac:</p>
+      <p><code>${origin}/calendar.ics</code></p>
+      <p>In Calendar, choose <strong>Add Subscription Calendar</strong> and paste the URL. Apple controls how often subscribed calendars refresh. Unsubscribe from Calendar whenever you no longer want the schedule.</p>
       <form method="post" action="/disconnect">
         <label>Email to disconnect</label>
         <input name="email" type="email" required placeholder="you@gmail.com" />
@@ -174,6 +211,7 @@ function privacyPage(): string {
       <h1>Privacy Policy</h1>
       <p><strong>Effective date:</strong> May 22, 2026</p>
       <p>NIBM Calendar Sync is a small calendar utility for syncing the public NIBM schedule spreadsheet into a connected Google Calendar.</p>
+      <p>The public <code>/calendar.ics</code> feed provides the same schedule as a read-only Apple Calendar subscription. It does not collect Apple account credentials or other personal information.</p>
 
       <h2>Information We Collect</h2>
       <p>When you connect Google Calendar, we collect your Google account ID, email address, Google refresh token, calendar ID created for the sync, sync status, and error logs needed to operate the service.</p>
@@ -185,6 +223,9 @@ function privacyPage(): string {
       <h2>Google Calendar Access</h2>
       <p>The app requests Google Calendar permission so it can create and manage the calendar/events it creates for the NIBM schedule. It does not use your Google data for advertising, profiling, or unrelated analytics.</p>
       <p>Use and transfer of information received from Google APIs will adhere to the Google API Services User Data Policy, including the Limited Use requirements.</p>
+
+      <h2>Apple Calendar Subscription</h2>
+      <p>The Apple Calendar feed is public and contains only the public NIBM schedule. It is read-only; Apple Calendar retrieves the feed according to its own refresh schedule. You can remove the subscription from your Apple Calendar at any time.</p>
 
       <h2>Storage and Security</h2>
       <p>Google refresh tokens are encrypted before they are stored in Cloudflare D1. Access to the service configuration and encryption key is limited to the operator of this service.</p>
@@ -210,9 +251,10 @@ function termsPage(): string {
       <h1>Terms of Service</h1>
       <p><strong>Effective date:</strong> May 22, 2026</p>
       <p>NIBM Calendar Sync is provided as a small personal utility for syncing the public NIBM schedule spreadsheet to Google Calendar.</p>
+      <p>The service also provides a public, read-only iCalendar feed for Apple Calendar subscriptions. Apple Calendar controls the refresh timing, and users can unsubscribe at any time.</p>
 
       <h2>Use of the Service</h2>
-      <p>You may use this service only to connect your own Google Calendar account and receive NIBM schedule events. Do not use the service to access accounts or calendars you do not control.</p>
+      <p>You may use this service to connect your own Google Calendar account or subscribe to the public Apple Calendar feed to receive NIBM schedule events. Do not use the service to access accounts or calendars you do not control.</p>
 
       <h2>Calendar Changes</h2>
       <p>The service creates, updates, and deletes events in the dedicated NIBM Schedule calendar it manages. It is not responsible for mistakes, delays, missing classes, spreadsheet errors, Google Calendar issues, or changes made outside the service.</p>
@@ -224,7 +266,7 @@ function termsPage(): string {
       <p>You are responsible for checking your official university schedule and confirming event accuracy. This service is a convenience tool and should not be treated as the official source of schedule truth.</p>
 
       <h2>Disconnecting</h2>
-      <p>You can stop future sync by using the disconnect form on the homepage or by removing the app from your Google Account permissions.</p>
+      <p>You can stop Google sync by using the disconnect form on the homepage or by removing the app from your Google Account permissions. Remove the Apple Calendar subscription directly from Calendar.</p>
 
       <h2>Limitation of Liability</h2>
       <p>To the maximum extent allowed by law, the service operator is not liable for missed classes, incorrect calendar events, data loss, service outages, or other damages caused by use of this tool.</p>
