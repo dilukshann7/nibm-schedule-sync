@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import type { Env, StoredUser } from "../src/workerTypes.js";
 import type { DesiredEvent } from "../src/types.js";
 
@@ -83,6 +83,8 @@ function desiredEvent(index: number): DesiredEvent {
 
 describe("initial sync", () => {
   beforeEach(() => {
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date("2026-05-20T08:00:00.000Z"));
     vi.clearAllMocks();
     decryptRefreshToken.mockResolvedValue("refresh-token");
     refreshAccessToken.mockResolvedValue({ access_token: "access-token" });
@@ -95,6 +97,10 @@ describe("initial sync", () => {
     createCalendar.mockResolvedValue("calendar-1");
     updateUserCalendarId.mockResolvedValue(undefined);
     markUserSynced.mockResolvedValue(undefined);
+  });
+
+  afterEach(() => {
+    vi.useRealTimers();
   });
 
   it("inserts only the first ten events on connect", async () => {
