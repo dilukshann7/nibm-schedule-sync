@@ -52,7 +52,8 @@ describe("parseScheduleRows", () => {
     const rows = [
       ["Friday, May 29, 2026", "ECS II", "Day 4 Session 1 [Ms. Bhagya Hapuarachchi]"],
       ["Saturday, May 30, 2026", "", "EAD2 - Lecture [Mr. Lahiru]"],
-      ["Sunday, May 31, 2026", "ITMP - Ms. Amila", ""]
+      ["Sunday, May 31, 2026", "ITMP - Ms. Amila", ""],
+      ["Monday, June 1, 2026", "", "", "Robotics - Mr. Supun", "MAD - Ishara Dissanayake"]
     ];
 
     expect(parseScheduleRows(rows, "Asia/Colombo", "09:00", "16:00").map((event) => event.sourceKey)).toEqual([
@@ -70,15 +71,16 @@ describe("parseScheduleRows", () => {
     ]);
   });
 
-  it("skips postponed, cancelled, and rescheduled schedule cells", () => {
+  it("skips postponed, cancelled, rescheduled, and online schedule cells", () => {
     const rows = [
       ["Tuesday, May 26, 2026", "Robotics - postponed", "MAD - cancelled"],
       ["Wednesday, May 27, 2026", "MAD - Ishara Dissanayake - Rescheduled", "MAD - Ishara Dissanayake - Rescheduled"],
-      ["Thursday, May 28, 2026", "ECS II - Day 1 Session 1 [Ms. Bhagya]", ""]
+      ["Thursday, May 28, 2026", "Robotics - Online Mr. Supun ( 1.00pm - 4.00pm) - Project Components Finalizing", ""],
+      ["Friday, May 29, 2026", "ECS II - Day 1 Session 1 [Ms. Bhagya]", ""]
     ];
 
     expect(parseScheduleRows(rows, "Asia/Colombo", "09:00", "16:00").map((event) => event.sourceKey)).toEqual([
-      "2026-05-28|ECS II"
+      "2026-05-29|ECS II"
     ]);
   });
 

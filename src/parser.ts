@@ -78,7 +78,7 @@ export function parseScheduleRows(rows: SheetRow[], timeZone: string, startTime:
 }
 
 function shouldSkipScheduleCell(value: string): boolean {
-  return /\b(postponed|cancelled|canceled|rescheduled)\b/i.test(value);
+  return /\b(postponed|cancelled|canceled|rescheduled|online)\b/i.test(value);
 }
 
 function getScheduleTextCandidates(row: SheetRow): string[] {
@@ -89,10 +89,6 @@ function getScheduleTextCandidates(row: SheetRow): string[] {
 
   if (nameColumnsText && !shouldSkipScheduleCell(nameColumnsText)) {
     candidates.push(nameColumnsText, firstNameColumn, secondNameColumn);
-  }
-
-  for (const cell of row.slice(3)) {
-    candidates.push(String(cell ?? ""));
   }
 
   return candidates;

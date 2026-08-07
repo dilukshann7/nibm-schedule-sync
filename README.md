@@ -101,7 +101,7 @@ npm run sync
 - Hosted Worker stores Google refresh tokens encrypted in D1.
 - The public `/calendar.ics` feed mirrors the schedule for read-only Apple Calendar subscriptions and does not require Apple credentials.
 - When the Excel sheet removes or moves a module/date, the next sync removes the old managed event and creates the new one.
-- Cells marked as postponed or cancelled are skipped instead of being added to the calendar.
+- Cells marked as postponed, cancelled, rescheduled, or online are skipped instead of being added to the calendar.
 - If events appear as `3:30 AM - 10:30 AM`, your Google Calendar/device is showing the same Sri Lanka event in UTC. Set the calendar or device timezone to Sri Lanka/Colombo.
 
 ## Commands
