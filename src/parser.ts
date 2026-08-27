@@ -78,7 +78,7 @@ export function parseScheduleRows(rows: SheetRow[], timeZone: string, startTime:
 }
 
 function shouldSkipScheduleCell(value: string): boolean {
-  return /\b(postponed|cancelled|canceled|rescheduled|online)\b/i.test(value);
+  return /\b(postponed|cancelled|canceled|rescheduled)\b/i.test(value);
 }
 
 function getScheduleTextCandidates(row: SheetRow): string[] {
@@ -87,7 +87,7 @@ function getScheduleTextCandidates(row: SheetRow): string[] {
   const candidates: string[] = [];
   const nameColumnsText = [firstNameColumn, secondNameColumn].filter(Boolean).join(" - ");
 
-  if (nameColumnsText && !shouldSkipScheduleCell(nameColumnsText)) {
+  if (nameColumnsText) {
     candidates.push(nameColumnsText, firstNameColumn, secondNameColumn);
   }
 
@@ -107,7 +107,12 @@ export function normalizeModuleName(value: string): string {
 }
 
 function normalizeScheduleTitle(value: string): string {
-  return isExamCell(value) ? normalizeExamName(value) : normalizeModuleName(value);
+  if (isExamCell(value)) {
+    return normalizeExamName(value);
+  }
+
+  const moduleName = normalizeModuleName(value).replace(/\bonline\b/gi, " ").replace(/\s+/g, " ").trim();
+  return moduleName && isOnlineCell(value) ? `${moduleName} (Online)` : moduleName;
 }
 
 function normalizeExamName(value: string): string {
@@ -128,8 +133,12 @@ function isExamCell(value: string): boolean {
   return /\b(?:final\s+examination|examination|exam)\b/i.test(value);
 }
 
+function isOnlineCell(value: string): boolean {
+  return /\bonline\b/i.test(value);
+}
+
 function getScheduleTimeRange(value: string, defaultStartTime: string, defaultEndTime: string): { startTime: string; endTime: string } {
-  if (!isExamCell(value)) {
+  if (!isExamCell(value) && !isOnlineCell(value)) {
     return { startTime: defaultStartTime, endTime: defaultEndTime };
   }
 

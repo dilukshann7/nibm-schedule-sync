@@ -71,16 +71,49 @@ describe("parseScheduleRows", () => {
     ]);
   });
 
-  it("skips postponed, cancelled, rescheduled, and online schedule cells", () => {
+  it("skips postponed, cancelled, and rescheduled schedule cells", () => {
     const rows = [
       ["Tuesday, May 26, 2026", "Robotics - postponed", "MAD - cancelled"],
       ["Wednesday, May 27, 2026", "MAD - Ishara Dissanayake - Rescheduled", "MAD - Ishara Dissanayake - Rescheduled"],
-      ["Thursday, May 28, 2026", "Robotics - Online Mr. Supun ( 1.00pm - 4.00pm) - Project Components Finalizing", ""],
       ["Friday, May 29, 2026", "ECS II - Day 1 Session 1 [Ms. Bhagya]", ""]
     ];
 
     expect(parseScheduleRows(rows, "Asia/Colombo", "09:00", "16:00").map((event) => event.sourceKey)).toEqual([
       "2026-05-29|ECS II"
+    ]);
+  });
+
+  it("syncs online sessions with an online title and their explicit time", () => {
+    const rows = [
+      [
+        "Friday, June 19, 2026",
+        "SC - MS. Chami- rescheduled",
+        "Robotics - Online Mr. Supun ( 4.00pm - 5.00pm) - Project Topics Finalizing"
+      ],
+      [
+        "Thursday, June 25, 2026",
+        "",
+        "Robotics - Online Mr. Supun ( 1.00pm - 4.00pm) - Project Components Finalizing"
+      ]
+    ];
+
+    expect(parseScheduleRows(rows, "Asia/Colombo", "09:00", "16:00")).toEqual([
+      {
+        sourceKey: "2026-06-19|Robotics (Online)",
+        title: "Robotics (Online)",
+        date: "2026-06-19",
+        startDateTime: "2026-06-19T16:00:00",
+        endDateTime: "2026-06-19T17:00:00",
+        timeZone: "Asia/Colombo"
+      },
+      {
+        sourceKey: "2026-06-25|Robotics (Online)",
+        title: "Robotics (Online)",
+        date: "2026-06-25",
+        startDateTime: "2026-06-25T13:00:00",
+        endDateTime: "2026-06-25T16:00:00",
+        timeZone: "Asia/Colombo"
+      }
     ]);
   });
 
